@@ -1,0 +1,15 @@
+[Unit]
+Description=WhisperType Instant Voice Dictation Daemon
+After=pipewire.service sound.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/home/eve/Projects/whispertype/.venv/bin/whispertyped
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=/home/eve/.local/bin:/usr/local/bin:/usr/bin
+
+[Install]
+WantedBy=default.target

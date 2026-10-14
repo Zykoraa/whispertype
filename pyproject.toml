@@ -1,0 +1,26 @@
+[project]
+name = "whispertype"
+version = "0.1.0"
+description = "Ultra-low-latency offline voice-to-text dictation daemon for Linux Wayland / Hyprland on NVIDIA RTX"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "faster-whisper>=1.0.0",
+    "sounddevice>=0.4.0",
+    "numpy>=1.24.0",
+    "evdev>=1.6.0",
+    "nvidia-cublas-cu12>=12.1.0",
+    "nvidia-cudnn-cu12>=9.0.0",
+]
+
+[project.scripts]
+whispertype = "whispertype.cli:main"
+whispertyped = "whispertype.daemon:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["whispertype*"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
