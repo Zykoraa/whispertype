@@ -31,15 +31,15 @@ grab = false
 # - Right Ctrl + Space:     palette   (omni floating selection menu)
 # - Right Ctrl + Down Arrow: uwu       (submissive freak girl)
 # - Right Ctrl + Up Arrow:   brainrot  (Gen Alpha / TikTok meme dialect)
-# - Right Ctrl + Left Arrow: discord   (minimalist chat, lowercase)
-# - Right Ctrl + Right Arrow: corporate (passive-aggressive enterprise speak)
+# - Right Ctrl + Left Arrow: schizo    (cyberpunk / glowies paranoia)
+# - Right Ctrl + Right Arrow: trump    (Donald Trump rally rhetoric)
 [triggers]
 KEY_RIGHTCTRL = "default"
 "KEY_RIGHTCTRL+KEY_SPACE" = "palette"
 "KEY_RIGHTCTRL+KEY_DOWN" = "uwu"
 "KEY_RIGHTCTRL+KEY_UP" = "brainrot"
-"KEY_RIGHTCTRL+KEY_LEFT" = "discord"
-"KEY_RIGHTCTRL+KEY_RIGHT" = "corporate"
+"KEY_RIGHTCTRL+KEY_LEFT" = "schizo"
+"KEY_RIGHTCTRL+KEY_RIGHT" = "trump"
 KEY_RIGHTALT = "code"
 BTN_EXTRA = "raw"
 
@@ -71,6 +71,24 @@ code_transform = false
 personality = "brainrot"
 polish = false
 casing = "lower"
+
+[styles.schizo]
+initial_prompt = "listen to me the glowies in the drywall three-letter federal agents monitored DARPA frequency untraceable Monero flush the tlb and melt the drives right now"
+strip_fillers = true
+macros = false
+code_transform = false
+personality = "schizo"
+polish = false
+casing = "normal"
+
+[styles.trump]
+initial_prompt = "Folks, tremendous, total disaster, believe me, nobody knows it better than me, winning bigly, frankly everyone is saying it."
+strip_fillers = true
+macros = false
+code_transform = false
+personality = "trump"
+polish = false
+casing = "normal"
 
 [styles.boomer]
 initial_prompt = "HELLO... GLAD TO HEAR FROM YOU... HOPE THE KIDS ARE DOING WELL... GOD BLESS... -BOB"
@@ -258,6 +276,26 @@ def get_default_styles(base_prompt: str = "", base_strip_fillers: bool = True, b
             personality="brainrot",
             polish=False,
             casing="lower",
+        ),
+        "schizo": StyleConfig(
+            name="schizo",
+            initial_prompt="listen to me the glowies in the drywall three-letter federal agents monitored DARPA frequency untraceable Monero flush the tlb and melt the drives right now",
+            strip_fillers=True,
+            macros=False,
+            code_transform=False,
+            personality="schizo",
+            polish=False,
+            casing="normal",
+        ),
+        "trump": StyleConfig(
+            name="trump",
+            initial_prompt="Folks, tremendous, total disaster, believe me, nobody knows it better than me, winning bigly, frankly everyone is saying it.",
+            strip_fillers=True,
+            macros=False,
+            code_transform=False,
+            personality="trump",
+            polish=False,
+            casing="normal",
         ),
         "boomer": StyleConfig(
             name="boomer",

@@ -175,6 +175,44 @@ BRAINROT_RULES = [
     (re.compile(r'\b(?i:charisma)\b'), "rizz"),
 ]
 
+SCHIZO_RULES = [
+    (re.compile(r'\b(?i:they|everyone|everybody|people|somebody|someone)\b'), "the glowies in the drywall"),
+    (re.compile(r'\b(?i:police|cops|authorities|government|feds)\b'), "three-letter federal agents"),
+    (re.compile(r'\b(?i:error|bug|issue|problem|crash|failure)\b'), "hardware implant telemetry breach"),
+    (re.compile(r'\b(?i:internet|wifi|network|connection)\b'), "monitored DARPA frequency"),
+    (re.compile(r'\b(?i:computer|pc|laptop|machine|server)\b'), "airgapped terminal"),
+    (re.compile(r'\b(?i:money|cash|dollars|payment)\b'), "untraceable Monero"),
+    (re.compile(r'\b(?i:phone|cell|mobile)\b'), "compromised baseband burner"),
+    (re.compile(r'\b(?i:house|home|apartment|room)\b'), "faraday bunker"),
+    (re.compile(r'\b(?i:car|vehicle|drive)\b'), "unmarked surveillance van"),
+    (re.compile(r'\b(?i:code|software|program|script)\b'), "zero-day kernel payload"),
+    (re.compile(r'\b(?i:listen|listening|hear|calling)\b'), "sniffing hypercall traps"),
+    (re.compile(r'\b(?i:look|see|watching)\b'), "tracking through the fluorescent lights"),
+    (re.compile(r'\b(?i:sleep|tired|rest)\b'), "subdermal microwave bombardment"),
+    (re.compile(r'\b(?i:safe|good|fine|okay)\b'), "compromised by Pegasus"),
+    (re.compile(r'\b(?i:secret|private|hidden)\b'), "classified black project"),
+    (re.compile(r'\b(?i:meeting|talking)\b'), "surveillance trap"),
+]
+
+TRUMP_RULES = [
+    (re.compile(r'\b(?i:great|awesome|amazing|fantastic|excellent)\b'), "tremendous, the greatest in the history of our country"),
+    (re.compile(r'\b(?i:good|cool|nice)\b'), "very special, very high quality"),
+    (re.compile(r'\b(?i:bad|terrible|horrible|awful)\b'), "a total and complete disaster, very sad"),
+    (re.compile(r'\b(?i:error|bug|problem|issue|failure)\b'), "a catastrophic mess caused by incompetent fools"),
+    (re.compile(r'\b(?i:smart|genius|clever)\b'), "a very stable genius with a very high IQ"),
+    (re.compile(r'\b(?i:stupid|idiot|dumb|fool)\b'), "low energy, total lightweight"),
+    (re.compile(r'\b(?i:money|cash|dollars)\b'), "billions and billions of dollars"),
+    (re.compile(r'\b(?i:people|everyone|everybody)\b'), "many people, frankly everyone"),
+    (re.compile(r'\b(?i:fix|solve|repair)\b'), "fix it fast and make it huge, believe me"),
+    (re.compile(r'\b(?i:win|winning|success)\b'), "winning like nobody has ever seen before, bigly"),
+    (re.compile(r'\b(?i:lose|lost|failed)\b'), "choked like a dog, total failure"),
+    (re.compile(r'\b(?i:friend|bro|dude|man|guy)\b'), "great guy, fantastic person"),
+    (re.compile(r'\b(?i:news|media|press)\b'), "the corrupt fake news media"),
+    (re.compile(r'\b(?i:true|honestly|seriously|really)\b'), "one hundred percent true, believe me folks"),
+    (re.compile(r'\b(?i:big|huge|large)\b'), "YUGE"),
+    (re.compile(r'\b(?i:unfair|unjust)\b'), "treated very unfairly, nobody has been treated worse"),
+]
+
 
 class TextPolisher:
     def __init__(
@@ -235,14 +273,52 @@ class TextPolisher:
 
         return res
 
+    def transform_schizo(self, text: str) -> str:
+        """Transform dictation into paranoid cyberpunk / glowies in the drywall rant (pure ASCII)."""
+        if not text:
+            return ""
+
+        res = text
+        for pat, rep in SCHIZO_RULES:
+            res = pat.sub(rep, res)
+
+        res = re.sub(r'\s+', ' ', res).strip()
+
+        if not res.lower().startswith(('listen to me', 'do not look outside', 'they are watching', 'the walls have microphones', 'we are compromised')):
+            res = "listen to me... " + res
+
+        if not any(f in res.lower() for f in ["flush the tlb", "melt the drives", "destroy the chips", "glow in the dark", "burn the sim"]):
+            res = res.rstrip('.?!') + "... flush the tlb and melt the drives right now"
+
+        return res
+
+    def transform_trump(self, text: str) -> str:
+        """Transform dictation into Donald Trump rally rhetoric (pure ASCII)."""
+        if not text:
+            return ""
+
+        res = text
+        for pat, rep in TRUMP_RULES:
+            res = pat.sub(rep, res)
+
+        res = re.sub(r'\s+', ' ', res).strip()
+
+        if not res.lower().startswith(('folks,', 'look,', 'nobody knows', 'frankly,', 'let me tell you')):
+            res = "Folks, " + res[0].lower() + res[1:]
+
+        if not any(f in res.lower() for f in ["believe me", "everyone is saying it", "nobody has seen anything like it", "witch hunt"]):
+            res = res.rstrip('.?!') + ", believe me, frankly everyone is saying it."
+
+        return res
+
     def generate_all_candidates(self, text: str) -> Dict[str, str]:
         """Compute all personality candidates simultaneously (<0.2 ms)."""
         return {
             "default": text,
             "brainrot": self.transform_brainrot(text),
             "uwu": self.transform_uwu(text),
-            "discord": self.transform_discord(text),
-            "corporate": self.transform_corporate(text),
+            "schizo": self.transform_schizo(text),
+            "trump": self.transform_trump(text),
         }
 
     def transform_boomer(self, text: str) -> str:
@@ -327,6 +403,10 @@ class TextPolisher:
             deterministic = self.transform_uwu(text)
         elif style == "brainrot":
             deterministic = self.transform_brainrot(text)
+        elif style == "schizo":
+            deterministic = self.transform_schizo(text)
+        elif style == "trump":
+            deterministic = self.transform_trump(text)
         elif style == "boomer":
             deterministic = self.transform_boomer(text)
         elif style == "gangster":
@@ -353,6 +433,20 @@ class TextPolisher:
             "brainrot": (
                 "Rewrite the following spoken sentence into Gen Alpha / TikTok Brainrot dialect. "
                 "Use slang terms like skibidi, sigma, rizzler, gyatt, fanum tax, ohio, blud, yapping, mewing, cooked, on god no cap fr fr. "
+                "Do NOT use any emojis or symbols. Return ONLY plain text words.\n\n"
+                f"Input: {text}\nOutput:"
+            ),
+            "schizo": (
+                "Rewrite the following spoken sentence into paranoid, dark-web / cyberpunk schizo style. "
+                "Reference the glowies in the drywall, three-letter federal agents, hardware implant telemetry, "
+                "monitored DARPA frequencies, sniffing hypercall traps, and flushing the TLB. "
+                "Do NOT use any emojis or symbols. Return ONLY plain text words.\n\n"
+                f"Input: {text}\nOutput:"
+            ),
+            "trump": (
+                "Rewrite the following spoken sentence into Donald Trump rally rhetoric. "
+                "Use classic phrases like Folks, tremendous, total disaster, believe me, "
+                "nobody knows it better than me, billions and billions, winning bigly, frankly everyone is saying it. "
                 "Do NOT use any emojis or symbols. Return ONLY plain text words.\n\n"
                 f"Input: {text}\nOutput:"
             ),

@@ -147,8 +147,8 @@ class CandidatePreviewPalette(QWidget):
         self.items_def = [
             ("1", "Brainrot", "#cba6f7", "brainrot"),
             ("2", "UwU", "#f5c2e7", "uwu"),
-            ("3", "Discord", "#a6e3a1", "discord"),
-            ("4", "Corporate", "#7287fd", "corporate"),
+            ("3", "Schizo", "#f38ba8", "schizo"),
+            ("4", "Trump", "#fab387", "trump"),
             ("5", "Default", "#89b4fa", "default"),
         ]
         self.rows: List[CandidateRow] = []
@@ -245,12 +245,12 @@ class CandidatePreviewPalette(QWidget):
                 self._set_active_row(1)
         elif key == Qt.Key.Key_3:
             if self.current_idx == 2:
-                self._select_and_close("discord")
+                self._select_and_close("schizo")
             else:
                 self._set_active_row(2)
         elif key == Qt.Key.Key_4:
             if self.current_idx == 3:
-                self._select_and_close("corporate")
+                self._select_and_close("trump")
             else:
                 self._set_active_row(3)
         elif key in (Qt.Key.Key_5, Qt.Key.Key_0):

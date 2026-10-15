@@ -189,7 +189,7 @@ class WhisperDaemon:
                 # 5. Smart Polish / SLM code / dialect transforms
                 personality = style_cfg.personality or (
                     "gangster" if (style_cfg.gangster_transform or style_name == "gangster") else (
-                        style_name if style_name in ("uwu", "brainrot", "boomer", "corporate", "discord", "victorian") else ""
+                        style_name if style_name in ("uwu", "brainrot", "schizo", "trump", "boomer", "corporate", "discord", "victorian") else ""
                     )
                 )
 
@@ -199,6 +199,10 @@ class WhisperDaemon:
                     text = self.polisher.transform_uwu(text)
                 elif personality == "brainrot":
                     text = self.polisher.transform_brainrot(text)
+                elif personality == "schizo":
+                    text = self.polisher.transform_schizo(text)
+                elif personality == "trump":
+                    text = self.polisher.transform_trump(text)
                 elif personality == "boomer":
                     text = self.polisher.transform_boomer(text)
                 elif personality == "gangster":
@@ -243,7 +247,7 @@ class WhisperDaemon:
         """Launch the floating Wayland candidate selection palette and return selected style."""
         try:
             cmd = [
-                "/usr/bin/python3",
+                sys.executable,
                 "-m",
                 "whispertype.palette",
                 "--choices",

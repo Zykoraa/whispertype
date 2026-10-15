@@ -35,11 +35,11 @@ def test_config():
     # 4-way arrow personality cluster
     assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_DOWN") == "uwu"
     assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_UP") == "brainrot"
-    assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_LEFT") == "discord"
-    assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_RIGHT") == "corporate"
+    assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_LEFT") == "schizo"
+    assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_RIGHT") == "trump"
 
     # Presets
-    for p in ["default", "palette", "uwu", "brainrot", "boomer", "corporate", "discord", "gangster", "victorian", "code", "raw"]:
+    for p in ["default", "palette", "uwu", "brainrot", "schizo", "trump", "boomer", "corporate", "discord", "gangster", "victorian", "code", "raw"]:
         assert p in cfg.styles
     print("[PASS] test_config")
 
@@ -128,12 +128,30 @@ def test_styles_and_polisher():
     assert "GOD BLESS... -BOB" in boomer
     assert boomer == boomer.upper()
 
-    # 4. Corporate dialect transforms
+    # 4. Schizo dialect transforms (pure text, no emojis)
+    schizo = tp.transform_schizo("They are watching my computer and phone, error on the internet.")
+    assert "glowies in the drywall" in schizo
+    assert "airgapped terminal" in schizo
+    assert "compromised baseband burner" in schizo
+    assert "monitored DARPA frequency" in schizo
+    assert "hardware implant telemetry breach" in schizo
+    assert "flush the tlb and melt the drives" in schizo
+    assert not any(ord(c) > 127 for c in schizo)
+
+    # 5. Trump dialect transforms (pure text, no emojis)
+    trump = tp.transform_trump("The code had an error, but it is great and we will fix it.")
+    assert "Folks," in trump
+    assert ("catastrophic mess" in trump or "disaster" in trump)
+    assert "tremendous" in trump
+    assert "believe me" in trump
+    assert not any(ord(c) > 127 for c in trump)
+
+    # 6. Corporate dialect transforms
     corp = tp.transform_corporate("As I already said, do your job and fix this bug.")
     assert "per my previous email" in corp
     assert "deliverables" in corp
 
-    # 5. Discord minimalist transforms (pure text, no emojis)
+    # 7. Discord minimalist transforms (pure text, no emojis)
     discord = tp.transform_discord("To be honest I do not know this is fire skull.")
     assert "tbh" in discord
     assert "idk" in discord
@@ -142,13 +160,13 @@ def test_styles_and_polisher():
     assert not any(ord(c) > 127 for c in discord)
     assert discord == discord.lower()
 
-    # 6. Gangster & Victorian dialect transforms (preserved)
+    # 8. Gangster & Victorian dialect transforms (preserved)
     gangster = tp.transform_gangster("You know I am going to the store with my friend.")
     assert "homie" in gangster
     vic = tp.transform_victorian("Hello, I think you are wrong, sadly it is nonsense.")
     assert "thou art" in vic
 
-    # 7. Brainrot dialect transform (pure text, no emojis)
+    # 9. Brainrot dialect transform (pure text, no emojis)
     brainrot = tp.transform_brainrot("We are in trouble because the server had an error, friend.")
     assert "we are cooked chat" in brainrot.lower()
     assert "ohio glitch" in brainrot.lower()
@@ -156,14 +174,14 @@ def test_styles_and_polisher():
     assert "fr fr" in brainrot.lower()
     assert not any(ord(c) > 127 for c in brainrot)
 
-    # 8. All candidates parallel generation
+    # 10. All candidates parallel generation
     cands = tp.generate_all_candidates("We have an error and need to fix it.")
-    assert set(cands.keys()) == {"default", "brainrot", "uwu", "discord", "corporate"}
+    assert set(cands.keys()) == {"default", "brainrot", "uwu", "schizo", "trump"}
     for k, v in cands.items():
         assert len(v) > 0
         assert not any(ord(c) > 127 for c in v)
 
-    print("[PASS] test_styles_and_polisher (Code, UwU Freak, Brainrot, Boomer, Corporate, Discord, Gangster, Victorian, All Candidates)")
+    print("[PASS] test_styles_and_polisher (Code, UwU Freak, Brainrot, Schizo, Trump, Boomer, Corporate, Discord, Gangster, Victorian, All Candidates)")
 
 
 def test_speculative_worker():
@@ -203,8 +221,8 @@ def test_listener_arrow_chords():
             "KEY_RIGHTCTRL+KEY_SPACE": "palette",
             "KEY_RIGHTCTRL+KEY_DOWN": "uwu",
             "KEY_RIGHTCTRL+KEY_UP": "brainrot",
-            "KEY_RIGHTCTRL+KEY_LEFT": "discord",
-            "KEY_RIGHTCTRL+KEY_RIGHT": "corporate",
+            "KEY_RIGHTCTRL+KEY_LEFT": "schizo",
+            "KEY_RIGHTCTRL+KEY_RIGHT": "trump",
             "KEY_RIGHTALT": "code",
             "BTN_EXTRA": "raw",
         }
@@ -223,9 +241,9 @@ def test_listener_arrow_chords():
     assert (97, 103) in listener.chords  # UP
     assert listener.chords[(97, 103)] == "brainrot"
     assert (97, 105) in listener.chords  # LEFT
-    assert listener.chords[(97, 105)] == "discord"
+    assert listener.chords[(97, 105)] == "schizo"
     assert (97, 106) in listener.chords  # RIGHT
-    assert listener.chords[(97, 106)] == "corporate"
+    assert listener.chords[(97, 106)] == "trump"
 
     # All keycodes tracked
     for c in [97, 57, 108, 103, 105, 106]:
