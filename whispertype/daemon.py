@@ -93,6 +93,7 @@ class WhisperDaemon:
             device_name=self.config.trigger.device_name,
             device_path=self.config.trigger.device_path,
             grab=self.config.trigger.grab,
+            mode=self.config.trigger.mode,
             on_press=self.on_press,
             on_release=self.on_release,
             on_style_change=self.on_style_change,
@@ -156,21 +157,12 @@ class WhisperDaemon:
             # 2. Vocabulary prompting from active style
             prompt = style_cfg.initial_prompt or self.config.model.initial_prompt
 
-            # 3. Speculative prefix / tail decoding or full transcription
-            prefix_text, tail_audio = self.speculative.get_result(audio, sample_rate=self.config.audio.sample_rate)
-            if prefix_text and tail_audio is not None:
-                tail_text = self.engine.transcribe(
-                    tail_audio,
-                    initial_prompt=prompt,
-                    strip_fillers=style_cfg.strip_fillers,
-                )
-                full_text = (prefix_text + " " + (tail_text or "")).strip()
-            else:
-                full_text = self.engine.transcribe(
-                    audio,
-                    initial_prompt=prompt,
-                    strip_fillers=style_cfg.strip_fillers,
-                )
+            # 3. Full-context transcription (preserves sentence continuity & grammar)
+            full_text = self.engine.transcribe(
+                audio,
+                initial_prompt=prompt,
+                strip_fillers=style_cfg.strip_fillers,
+            )
 
             if not full_text:
                 return

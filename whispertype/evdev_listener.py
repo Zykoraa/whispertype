@@ -16,6 +16,7 @@ class EvdevListener:
         device_name: str = "",
         device_path: str = "",
         grab: bool = False,
+        mode: str = "hybrid",
         on_press: Optional[Callable[..., None]] = None,
         on_release: Optional[Callable[..., None]] = None,
         on_style_change: Optional[Callable[[str], None]] = None,
@@ -55,6 +56,7 @@ class EvdevListener:
         self.device_name = device_name
         self.device_path = device_path
         self.grab = grab
+        self.mode = mode
         self.on_press = on_press
         self.on_release = on_release
         self.on_style_change = on_style_change
@@ -65,6 +67,10 @@ class EvdevListener:
         self._selector = selectors.DefaultSelector()
         self._active_code: Optional[int] = None
         self._active_style: Optional[str] = None
+        self._press_time: float = 0.0
+        self._is_latched: bool = False
+        self._latched_code: Optional[int] = None
+        self._latched_style: Optional[str] = None
 
     def get_all_active_keys(self) -> Set[int]:
         active_set: Set[int] = set()
@@ -137,8 +143,22 @@ class EvdevListener:
                         if ev.code not in self.all_target_codes:
                             continue
 
+                        # Case 0: If currently latched in hands-free toggle mode, tapping hotkey stops recording
+                        if self._is_latched and ev.value == 1 and ev.code in self.base_keys:
+                            self._is_latched = False
+                            active_style = self._latched_style or self.base_keys.get(ev.code, "default")
+                            self._latched_code = None
+                            self._latched_style = None
+                            self._active_code = None
+                            self._active_style = None
+                            print(f"[WhisperType] Hands-free toggle stop triggered [style: {active_style}].")
+                            if self.on_release:
+                                self.on_release(active_style, is_polish=False)
+                            continue
+
                         # Case 1: Base hotkey pressed down
-                        if ev.code in self.base_keys and ev.value == 1 and self._active_code is None:
+                        if ev.code in self.base_keys and ev.value == 1 and self._active_code is None and not self._is_latched:
+                            self._press_time = time.perf_counter()
                             active_held = self.get_all_active_keys()
                             resolved_style = self.base_keys[ev.code]
                             for (b, m), c_style in self.chords.items():
@@ -172,9 +192,23 @@ class EvdevListener:
 
                         # Case 3: Active base key released
                         elif ev.code == self._active_code and ev.value == 0:
+                            duration = time.perf_counter() - self._press_time
                             active_style = self._active_style or self.base_keys.get(ev.code, "default")
+
+                            if (self.mode == "hybrid" and duration < 0.28) or self.mode == "toggle":
+                                # Quick tap: Latch ON for hands-free recording
+                                self._is_latched = True
+                                self._latched_code = ev.code
+                                self._latched_style = active_style
+                                self._active_code = None
+                                self._active_style = None
+                                print(f"[WhisperType] Quick tap detected ({duration*1000:.0f}ms): Hands-free recording latched ON [style: {active_style}]. Tap again to finish.")
+                                continue
+
+                            # Normal hold-to-talk release
                             self._active_code = None
                             self._active_style = None
+                            self._is_latched = False
 
                             is_polish = False
                             try:

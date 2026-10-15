@@ -198,6 +198,7 @@ class TriggerConfig:
     device_name: str = ""
     device_path: str = ""
     grab: bool = False
+    mode: str = "hybrid"  # "hybrid" (tap to toggle / hold to talk), "hold", "toggle"
 
 
 @dataclass
@@ -506,6 +507,7 @@ def load_config(path: Optional[Path] = None) -> Config:
                 device_name=t.get("device_name", ""),
                 device_path=t.get("device_path", ""),
                 grab=bool(t.get("grab", False)),
+                mode=t.get("mode", "hybrid"),
             ),
             triggers=triggers_map,
             styles=styles_map,

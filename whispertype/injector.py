@@ -1,6 +1,7 @@
 """Text injection engine for Linux / Hyprland via direct kernel uinput and Wayland."""
 
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -68,14 +69,32 @@ TERMINAL_CLASSES = {
 }
 
 
+def _get_wayland_env() -> Dict[str, str]:
+    """Ensure WAYLAND_DISPLAY and XDG_RUNTIME_DIR are populated for compositor tools."""
+    env = dict(os.environ)
+    uid = os.getuid()
+    runtime_dir = Path(env.get("XDG_RUNTIME_DIR", f"/run/user/{uid}"))
+    env["XDG_RUNTIME_DIR"] = str(runtime_dir)
+
+    if "WAYLAND_DISPLAY" not in env or not env["WAYLAND_DISPLAY"]:
+        if runtime_dir.exists():
+            for sock in sorted(runtime_dir.glob("wayland-*")):
+                if sock.is_socket() and not sock.name.endswith(".lock"):
+                    env["WAYLAND_DISPLAY"] = sock.name
+                    break
+    return env
+
+
 def _get_active_window_class() -> str:
     """Query Hyprland for currently focused window class."""
     try:
+        env = _get_wayland_env()
         res = subprocess.run(
             ["hyprctl", "activewindow", "-j"],
             capture_output=True,
             text=True,
             timeout=0.1,
+            env=env,
         )
         if res.returncode == 0 and res.stdout:
             data = json.loads(res.stdout)
@@ -126,7 +145,7 @@ class TextInjector:
             self._uinput.syn()
             self._uinput.write(evdev.ecodes.EV_KEY, KEY.KEY_BACKSPACE, 0)
             self._uinput.syn()
-            time.sleep(0.001)
+            time.sleep(0.0005)
         self._last_injected_length = 0
 
     def inject(self, text: str):
@@ -142,21 +161,29 @@ class TextInjector:
 
         active_class = _get_active_window_class()
         is_terminal = any(term in active_class for term in TERMINAL_CLASSES)
-
         can_type_ascii = all(c in CHAR_MAP for c in text)
 
-        # Use direct uinput keystrokes if configured and text fits in standard map
-        if self.method in ("uinput", "type") and self._uinput and can_type_ascii and len(text) <= self.paste_threshold:
-            self._type_uinput(text)
-            self._last_injected_length = len(text)
-        elif self.method == "wtype" and shutil.which("wtype"):
-            self._type_wtype(text, is_terminal=is_terminal)
-            self._last_injected_length = len(text)
-        elif self._has_wl_copy:
-            self._paste_text(text, is_terminal=is_terminal)
-            self._last_injected_length = len(text)
-        elif self._uinput and can_type_ascii:
-            self._type_uinput(text)
+        injected = False
+
+        # For long prompts above threshold, attempt fast clipboard paste first
+        if len(text) > self.paste_threshold and self._has_wl_copy:
+            injected = self._paste_text(text, is_terminal=is_terminal)
+
+        # Fallback to direct kernel uinput keystrokes (never drops text)
+        if not injected:
+            if self.method in ("uinput", "type") and self._uinput and can_type_ascii:
+                self._type_uinput(text)
+                injected = True
+            elif self.method == "wtype" and shutil.which("wtype"):
+                self._type_wtype(text, is_terminal=is_terminal)
+                injected = True
+            elif self._has_wl_copy:
+                injected = self._paste_text(text, is_terminal=is_terminal)
+            elif self._uinput and can_type_ascii:
+                self._type_uinput(text)
+                injected = True
+
+        if injected:
             self._last_injected_length = len(text)
         else:
             print(f"[WhisperType] Could not find suitable text injection method.")
@@ -176,20 +203,20 @@ class TextInjector:
 
             self._uinput.write(evdev.ecodes.EV_KEY, code, 1)
             self._uinput.syn()
-            time.sleep(0.001)
 
             self._uinput.write(evdev.ecodes.EV_KEY, code, 0)
             if shift:
                 self._uinput.write(evdev.ecodes.EV_KEY, KEY.KEY_LEFTSHIFT, 0)
             self._uinput.syn()
-            time.sleep(0.001)
+            time.sleep(0.0003)
 
-    def _paste_text(self, text: str, is_terminal: bool = False):
+    def _paste_text(self, text: str, is_terminal: bool = False) -> bool:
         """Fast clipboard paste using wl-copy and synthetic Ctrl+V / Ctrl+Shift+V."""
+        env = _get_wayland_env()
         old_clipboard = None
         if self.restore_clipboard:
             try:
-                res = subprocess.run(["wl-paste", "--no-newline"], capture_output=True, text=True, timeout=0.1)
+                res = subprocess.run(["wl-paste", "--no-newline"], capture_output=True, text=True, timeout=0.1, env=env)
                 if res.returncode == 0:
                     old_clipboard = res.stdout
             except Exception:
@@ -197,7 +224,7 @@ class TextInjector:
 
         try:
             # Copy text to clipboard
-            subprocess.run(["wl-copy"], input=text.encode("utf-8"), check=True, timeout=0.5)
+            subprocess.run(["wl-copy"], input=text.encode("utf-8"), check=True, timeout=0.5, env=env)
 
             # Send paste keystroke via uinput if available, else wtype
             if self._uinput:
@@ -215,22 +242,25 @@ class TextInjector:
                 self._uinput.syn()
             elif shutil.which("wtype"):
                 if is_terminal:
-                    subprocess.run(["wtype", "-M", "ctrl", "-M", "shift", "-k", "v"], timeout=0.5)
+                    subprocess.run(["wtype", "-M", "ctrl", "-M", "shift", "-k", "v"], timeout=0.5, env=env)
                 else:
-                    subprocess.run(["wtype", "-M", "ctrl", "-k", "v"], timeout=0.5)
+                    subprocess.run(["wtype", "-M", "ctrl", "-k", "v"], timeout=0.5, env=env)
 
             # Restore original clipboard asynchronously after paste registers
             if old_clipboard is not None:
                 def restore():
-                    time.sleep(0.2)
+                    time.sleep(0.3)
                     try:
-                        subprocess.run(["wl-copy"], input=old_clipboard.encode("utf-8"), timeout=0.5)
+                        subprocess.run(["wl-copy"], input=old_clipboard.encode("utf-8"), timeout=0.5, env=env)
                     except Exception:
                         pass
                 threading.Thread(target=restore, daemon=True).start()
 
+            return True
+
         except Exception as e:
-            print(f"[WhisperType] Paste injection error: {e}")
+            print(f"[WhisperType] Paste injection warning: {e}, falling back to keystroke synthesis...")
+            return False
 
     def _type_wtype(self, text: str, is_terminal: bool = False):
         try:

@@ -26,6 +26,7 @@ def test_config():
     # Base trigger
     assert "KEY_RIGHTCTRL" in cfg.triggers
     assert cfg.triggers["KEY_RIGHTCTRL"] == "default"
+    assert cfg.trigger.mode == "hybrid"
 
     # Multi-candidate palette trigger
     assert cfg.triggers.get("KEY_RIGHTCTRL+KEY_SPACE") == "palette"

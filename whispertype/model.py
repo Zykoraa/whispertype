@@ -137,7 +137,7 @@ class WhisperEngine:
             beam_size=self.beam_size,
             language=self.language,
             vad_filter=True,
-            vad_parameters=dict(min_silence_duration_ms=150),
+            vad_parameters=dict(min_silence_duration_ms=500, speech_pad_ms=400),
             initial_prompt=prompt if prompt else None,
             suppress_tokens=self.suppress_tokens,
         )

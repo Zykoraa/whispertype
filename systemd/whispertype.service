@@ -1,6 +1,6 @@
 [Unit]
 Description=WhisperType Instant Voice Dictation Daemon
-After=pipewire.service sound.target
+After=pipewire.service sound.target graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
@@ -10,6 +10,7 @@ Restart=on-failure
 RestartSec=3
 Environment=PYTHONUNBUFFERED=1
 Environment=PATH=/home/eve/.local/bin:/usr/local/bin:/usr/bin
+PassEnvironment=WAYLAND_DISPLAY XDG_RUNTIME_DIR HYPRLAND_INSTANCE_SIGNATURE DISPLAY
 
 [Install]
 WantedBy=default.target
